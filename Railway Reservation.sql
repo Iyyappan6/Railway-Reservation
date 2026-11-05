@@ -87,9 +87,13 @@ SELECT passenger_name, age from passengers
 
 select * from passengers where age > 25
 
+-- A passenger has booked a ticket on which train, the ticket price should be displayed 
+
 SELECT p.passenger_name, t.train_name, b.booking_date, b.ticket_price FROM passengers p
 INNER JOIN bookings b ON p.passenger_id = b.passenger_id
 INNER JOIN trains t ON b.train_id = t.train_id
+
+-- Need to display passenger name, train name, departure station, destination station, and ticket price
 
 SELECT p.passenger_name, t.train_name, s1.station_name AS From_Station, s2.station_name AS To_Station, b.ticket_price FROM bookings b
 INNER JOIN passengers p ON b.passenger_id = p.passenger_id
@@ -97,20 +101,29 @@ INNER JOIN trains t ON b.train_id = t.train_id
 INNER JOIN stations s1 ON b.from_station = s1.station_id
 INNER JOIN stations s2 ON b.to_station = s2.station_id
 
+-- Passenger name, train name, ticket price, payment method, and payment status need to be displayed
+
 SELECT p.passenger_name, t.train_name, b.ticket_price, py.payment_method, py.payment_status, py.amount FROM passengers p
 INNER JOIN bookings b ON p.passenger_id = b.passenger_id
 INNER JOIN trains t ON b.train_id = t.train_id
 LEFT JOIN payments py ON b.booking_id = py.booking_id
+
+-- Let's calculate how much total ticket revenue a train has earned
 
 SELECT t.train_name, SUM(b.ticket_price) AS Total_Revenue FROM trains t
 INNER JOIN bookings b ON t.train_id = b.train_id
 GROUP BY t.train_name
 ORDER BY Total_Revenue DESC
 
+-- The system should display successful and pending railway payments separately
+-- Payment Success Details
+
 SELECT p.passenger_name, py.payment_method, py.amount, py.payment_status FROM passengers p
 INNER JOIN bookings b ON p.passenger_id = b.passenger_id
 INNER JOIN payments py ON b.booking_id = py.booking_id
 WHERE py.payment_status = 'Success'
+
+-- Pending Payment Details
 
 SELECT p.passenger_name, t.train_name, py.amount, py.payment_status FROM passengers p
 INNER JOIN bookings b ON p.passenger_id = b.passenger_id
@@ -118,34 +131,51 @@ INNER JOIN trains t ON b.train_id = t.train_id
 INNER JOIN payments py ON b.booking_id = py.booking_id
 WHERE py.payment_status = 'Pending'
 
+-- Payment Summary – COUNT + GROUP BY
+
 SELECT payment_status, COUNT(*) AS Total_Payments, SUM(amount) AS Total_Amount FROM payments
 GROUP BY payment_status
+
+-- Each passenger total bookings
 
 SELECT p.passenger_name, COUNT(b.booking_id) AS Total_Bookings FROM passengers p
 LEFT JOIN bookings b ON p.passenger_id = b.passenger_id
 GROUP BY p.passenger_id, p.passenger_name
 
+-- Highest ticket price
+
 SELECT MAX(ticket_price) AS Highest_Ticket_Price
 FROM bookings
+
+-- Lowest ticket price
 
 SELECT MIN(ticket_price) AS Lowest_Ticket_Price
 FROM bookings
 
+-- Average ticket price
+
 SELECT AVG(ticket_price) AS Average_Ticket_Price
 FROM bookings
+
+-- People who made more than one booking   
 
 SELECT p.passenger_name, COUNT(b.booking_id) AS Total_Bookings FROM passengers p
 INNER JOIN bookings b ON p.passenger_id = b.passenger_id
 GROUP BY p.passenger_id, p.passenger_name
 HAVING COUNT(b.booking_id) > 1
 
+-- Tickets priced higher than the average ticket price
+
 SELECT * FROM bookings
 WHERE ticket_price > (SELECT AVG(ticket_price) FROM bookings)
 
+-- The passenger with the highest ticket price
+
 SELECT passenger_name FROM passengers
 WHERE passenger_id = (SELECT passenger_id FROM bookings
-WHERE ticket_price = (SELECT MAX(ticket_price) FROM bookings)
-)
+WHERE ticket_price = (SELECT MAX(ticket_price) FROM bookings))
+
+-- Passengers who have not made any bookings
 
 SELECT * FROM passengers
 WHERE passenger_id NOT IN (SELECT passenger_id FROM bookings)
